@@ -1,0 +1,79 @@
+body {
+  text-align: center;
+}
+
+input {
+  height: 3em;
+  width: 3em;
+  margin: 0.5em;
+  font-weight: bold;
+  border-radius: 0.2vw;
+  border: 0.1vw solid #ffffff;
+  padding: 0.1em, 0.2em;
+}
+
+input:hover {
+  background-color: #2dabf9;
+  color: white;
+}
+
+h1 {
+  margin-right: 0.5em;
+  text-align: left;
+  width: 20rem;
+  height: 2rem;
+  font-size: 1.8rem;
+  background-color: white;
+  color: black;
+}
+
+#calculator {
+  margin-top: 2em;
+  display: inline-block;
+  height: 20em;
+  width: 22em;
+  box-shadow: inset 0 -0.3vw 0.6vw 0 #29bbff;
+  background: linear-gradient(to bottom, #2dabf9 5%, #0688fa 100%);
+  background-color: #2dabf9;
+  border-radius: 1vw;
+  border: 0.1vw solid black;
+  color: white;
+  text-shadow: 0px 1px 0px #263666;
+}
+
+.calculator-buttons {
+  margin-left: 1em;
+  margin-right: 1em;
+}
+
+.number-buttons {
+  width: 11rem;
+  display: inline-block;
+}
+
+.operator-buttons {
+  display: inline-block;
+  width: 7rem;
+}
+
+.calculator-three-button-row {
+  width: 11rem;
+}
+
+.calculator-two-button-row {
+  width: 7rem;
+}
+
+.big-button {
+  width: 7.3em;
+}
+
+.rotated {
+  transition: transform 2s;
+  transform-style: preserve-3d;
+  transform: rotatex(1080deg);
+}
+
+.hidden {
+  visibility: hidden;
+}
