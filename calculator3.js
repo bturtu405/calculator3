@@ -3,6 +3,7 @@
       const MATH_ERROR_MESSAGE = 'Math Error';
       const CALCULATOR = document.getElementById('calculator');
       const CALCULATOR_INPUT = document.getElementById('calculatorInput');
+      const REGEX_ZERO_TO_NINE = /\d/;
       const CALCULATOR_BUTTONS = {
         plus: '+',
         minus: '-',
@@ -23,7 +24,7 @@
         nine: '9',
         dot: '.'
       };
-      const CALCULATOR_OPERATOR_SIGNS = [CALCULATOR_BUTTONS.plus, CALCULATOR_BUTTONS.minus,
+      const OPERATOR_SIGNS = [CALCULATOR_BUTTONS.plus, CALCULATOR_BUTTONS.minus,
         CALCULATOR_BUTTONS.divide, CALCULATOR_BUTTONS.multiply
       ];
       const CALCULATOR_ACTIONS_SIGNS = [CALCULATOR_BUTTONS.equal, CALCULATOR_BUTTONS.clear,
@@ -50,20 +51,17 @@
       CALCULATOR_INPUT.innerHTML = '';
 
       const invokeClickedButton = (buttonId) => {
-        const BUTTON = document.getElementById(buttonId);
-        BUTTON.blur();
+        const button = document.getElementById(buttonId);
+        button.blur();
         keySorter(CALCULATOR_BUTTONS[buttonId]);
       }
 
-      document.addEventListener('keydown', ({
-        key
-      }) => keySorter(key));
+      document.addEventListener('keydown', ({key}) => keySorter(key));
 
       const keySorter = (key) => {
         if (CALCULATOR_ACTIONS_SIGNS.includes(key)) {
-          calcActions(key);
+          CALCULATOR_ACTIONS[key]();
         } else {
-
           if (isNewEquation && CALCULATOR_INPUT.innerHTML.length < MAX_CHARACTERS_INPUT) {
             writeInTextbox(key);
             isNewEquation = true;
@@ -72,9 +70,10 @@
       }
 
       const writeInTextbox = (key) => {
-        addZeroAtTheBeginningBeforeMinusSign();
-
-        if (key.match(/[0-9]/) !== null && key.length === 1) {
+        if (CALCULATOR_INPUT.innerHTML[0] === CALCULATOR_BUTTONS.minus) {
+          addZeroAtTheBeginningBeforeMinusSign();
+        }
+        if (key.match(REGEX_ZERO_TO_NINE) && key.length === 1) {
           writeNumbers(key);
         }
 
@@ -82,85 +81,81 @@
           writeDot();
         }
 
-        if (CALCULATOR_OPERATOR_SIGNS.includes(key)) {
+        if (OPERATOR_SIGNS.includes(key)) {
           writeOperator(key);
         }
       }
 
-      const writeNumbers = (key) => {
-        const IS_EQUATIONS_NOT_EMPTY = equations.length !== 0;
-        const CALC_INPUT = CALCULATOR_INPUT.innerHTML;
-        if (CALC_INPUT === CALCULATOR_BUTTONS.zero) {
+      const writeNumbers = number => {
+        const calculatorInput = CALCULATOR_INPUT.innerHTML;
+        if (calculatorInput === CALCULATOR_BUTTONS.zero) {
           backspace();
         }
-        if (IS_EQUATIONS_NOT_EMPTY) {
+        if (equations.length) {
           if (equations[equations.length - 1].secondNum === CALCULATOR_BUTTONS.zero) {
             backspace();
           }
+          equations[equations.length - 1].secondNum += number;
         }
-        if (IS_EQUATIONS_NOT_EMPTY) {
-          equations[equations.length - 1].secondNum += key;
-        }
-        CALCULATOR_INPUT.innerHTML += key;
+        CALCULATOR_INPUT.innerHTML += number;
       }
 
       const writeDot = () => {
-        const CALC_INPUT = CALCULATOR_INPUT.innerHTML;
-        const IS_EQUATIONS_NOT_EMPTY = equations.length !== 0;
-        if (IS_EQUATIONS_NOT_EMPTY) {
-          const SECOND_NUM = equations[equations.length - 1].secondNum;
-          if (!SECOND_NUM) {
+        const calculatorInput = CALCULATOR_INPUT.innerHTML;
+        const isEquationsNotEmpty = equations.length;
+        if (isEquationsNotEmpty) {
+          const secondNumber = equations[equations.length - 1].secondNum;
+          if (!secondNumber) {
             CALCULATOR_INPUT.innerHTML += CALCULATOR_BUTTONS.zero + CALCULATOR_BUTTONS.dot;
             equations[equations.length - 1].secondNum = CALCULATOR_BUTTONS.zero + CALCULATOR_BUTTONS.dot;
-          } else if (!SECOND_NUM.includes(CALCULATOR_BUTTONS.dot)) {
+          } else if (!secondNumber.includes(CALCULATOR_BUTTONS.dot)) {
             CALCULATOR_INPUT.innerHTML += CALCULATOR_BUTTONS.dot;
             equations[equations.length - 1].secondNum += CALCULATOR_BUTTONS.dot;
           }
         } else {
-          if (!CALC_INPUT) {
+          if (!calculatorInput) {
             CALCULATOR_INPUT.innerHTML = CALCULATOR_BUTTONS.zero + CALCULATOR_BUTTONS.dot;
-          } else if (!CALC_INPUT.includes(CALCULATOR_BUTTONS.dot)) {
+          } else if (!calculatorInput.includes(CALCULATOR_BUTTONS.dot)) {
             CALCULATOR_INPUT.innerHTML += CALCULATOR_BUTTONS.dot;
           }
         }
       }
 
-      const writeOperator = (key) => {
-        const IS_EQUATIONS_NOT_EMPTY = equations.length !== 0;
-        IS_EQUATIONS_NOT_EMPTY ? writeOperatorWhenEquationsIsNotEmpty(key)
-        : writeOperatorWhenEquationsIsEmpty(key);
+      const writeOperator = (operator) => {
+        const isEquationsNotEmpty = equations.length;
+        isEquationsNotEmpty ? writeOperatorWhenEquationsIsNotEmpty(operator)
+        : writeOperatorWhenEquationsIsEmpty(operator);
+        CALCULATOR_INPUT.innerHTML += operator;
       }
 
-      const writeOperatorWhenEquationsIsEmpty = (key) => {
-        const CALC_INPUT = CALCULATOR_INPUT.innerHTML;
-        const LAST_CHARACTER = CALC_INPUT.charAt(CALC_INPUT.length - 1);
-        if (!CALC_INPUT) {
+      const writeOperatorWhenEquationsIsEmpty = (operator) => {
+        const calculatorInput = CALCULATOR_INPUT.innerHTML;
+        const lastCharacter = calculatorInput.charAt(calculatorInput.length - 1);
+        if (!calculatorInput) {
           CALCULATOR_INPUT.innerHTML = CALCULATOR_BUTTONS.zero;
-          addEquation(CALCULATOR_BUTTONS.zero, key, '');
-        } else if (LAST_CHARACTER === CALCULATOR_BUTTONS.dot) {
-          backspace();
-          addEquation(CALCULATOR_INPUT.innerHTML, key, '');
-        } else {
-          addEquation(CALCULATOR_INPUT.innerHTML, key, '');
-        }
-        CALCULATOR_INPUT.innerHTML += key;
+          addEquation(CALCULATOR_BUTTONS.zero, operator, '');
+        } else{
+          if (lastCharacter === CALCULATOR_BUTTONS.dot) {
+            backspace();
+          }
+            addEquation(calculatorInput, operator, '');
+          }
       }
 
-     const writeOperatorWhenEquationsIsNotEmpty = (key) =>{
-       const LAST_EQUATION_SECOND_NUM = equations[equations.length - 1].secondNum;
-       if (!LAST_EQUATION_SECOND_NUM) {
-         equations[equations.length - 1].operator = key;
-         const LAST_EQUATION_FIRST_NUM = equations[equations.length - 1].firstNum;
+     const writeOperatorWhenEquationsIsNotEmpty = (operator) =>{
+       const lastEquationSecondNumber = equations[equations.length - 1].secondNum;
+       if (!lastEquationSecondNumber) {
+         equations[equations.length - 1].operator = operator;
+         const lastEquationFirstNumber = equations[equations.length - 1].firstNum;
          backspace();
-         addEquation(LAST_EQUATION_FIRST_NUM, key, '');
-       } else if (LAST_EQUATION_SECOND_NUM.charAt(LAST_EQUATION_SECOND_NUM.length - 1) ===
+         addEquation(lastEquationFirstNumber, operator, '');
+       } else if (lastEquationSecondNumber.charAt(lastEquationSecondNumber.length - 1) ===
          CALCULATOR_BUTTONS.dot) {
          backspace();
-         addEquation(LAST_EQUATION_SECOND_NUM, key, '');
+         addEquation(lastEquationSecondNumber, operator, '');
        } else {
-         addEquation(LAST_EQUATION_SECOND_NUM, key, '');
+         addEquation(lastEquationSecondNumber, operator, '');
        }
-       CALCULATOR_INPUT.innerHTML += key;
      }
 
       const addEquation = (firstNum, operator, secondNum) => {
@@ -171,33 +166,29 @@
         });
       }
 
-      const calcActions = (key) => {
-        CALCULATOR_ACTIONS[key]();
-      }
-
       const equal = () => {
         flipCalculator();
-        const CALC_INPUT = CALCULATOR_INPUT.innerHTML;
-        const LAST_CHARACTER = CALC_INPUT.charAt(CALC_INPUT.length - 1);
-        if (!CALC_INPUT) {
+        const calculatorInput = CALCULATOR_INPUT.innerHTML;
+        const lastCharacter = calculatorInput.charAt(calculatorInput.length - 1);
+        if (!calculatorInput) {
           CALCULATOR_INPUT.innerHTML = CALCULATOR_BUTTONS.zero;
         } else {
-          lastCharacterValid(LAST_CHARACTER);
-          let result = Number(getResult());
+          deleteLastCharacterIfNotValid(lastCharacter);
+          let result = getResult();
           if (!validateResult(result)) {
             mathError();
           } else {
             CALCULATOR_INPUT.innerHTML = result;
-            equations = [];
           }
         }
       }
 
       const getResult = () => {
-        const CALC_INPUT = CALCULATOR_INPUT.innerHTML;
+        const calculatorInput = CALCULATOR_INPUT.innerHTML;
         let result;
         let hasMultiplyOrDivideSigns;
-        for (let equationIndex = 0; equationIndex < equations.length; equationIndex++) {
+        let equationIndex = 0;
+        while (equationIndex < equations.length) {
           hasMultiplyOrDivideSigns = checkMultiplyOrDivideSigns();
           if (!hasMultiplyOrDivideSigns || equationIndex < 0) {
             equationIndex = 0;
@@ -207,26 +198,26 @@
             || !hasMultiplyOrDivideSigns) {
             result = calculate(equations[equationIndex]);
             updateEquations(result, equationIndex);
-            if (equations.length === 0) {
-              return result;
+            if (!equations.length) {
+              return Number(result);
             }
             equationIndex -= 2;
           }
+          equationIndex++;
         }
-        return CALC_INPUT;
+        return Number(calculatorInput);
       }
 
       const backspace = () => {
-         const CALC_INPUT = CALCULATOR_INPUT.innerHTML;
+         const calculatorInput = CALCULATOR_INPUT.innerHTML;
         if (isNewEquation) {
-          if (equations.length !== 0) {
-            const LAST_EQUATION_SECOND_NUM = equations[equations.length - 1].secondNum;
-            console.log(CALCULATOR_OPERATOR_SIGNS.includes(CALC_INPUT[CALC_INPUT.length - 1]));
-            (CALCULATOR_OPERATOR_SIGNS.includes(CALC_INPUT[CALC_INPUT.length - 1]))
-            ? equations.splice(equations.length - 1, 1): equations[equations.length - 1].secondNum =
-              LAST_EQUATION_SECOND_NUM.slice(0, LAST_EQUATION_SECOND_NUM.length - 1);
+          if (equations.length) {
+            const lastEquationSecondNumber = equations[equations.length - 1].secondNum;
+            OPERATOR_SIGNS.includes(calculatorInput[calculatorInput.length - 1])
+            ? equations.splice(equations.length - 1, 1): equations[equations.length - 1].secondNum
+            = lastEquationSecondNumber.slice(0, lastEquationSecondNumber.length - 1);
           }
-          CALCULATOR_INPUT.innerHTML = CALCULATOR_INPUT.innerHTML.slice(0, -1);
+          CALCULATOR_INPUT.innerHTML = calculatorInput.slice(0, -1);
         }
       }
 
@@ -285,43 +276,42 @@
       }
 
       const multiplyTimes10ByNumberAfterDot = (firstNumber, secondNumber) => {
-        let firstNumberHasDot = firstNumber.toString().includes(CALCULATOR_BUTTONS.dot);
-        let secondNumberHasDot = secondNumber.toString().includes(CALCULATOR_BUTTONS.dot);
-        let firstNumberNumbersAfterdot = firstNumber.toString().split(CALCULATOR_BUTTONS.dot)[1];
-        let secondNumberNumbersAfterdot = secondNumber.toString().split(CALCULATOR_BUTTONS.dot)[1];
+        const firstNumberHasDot = firstNumber.toString().includes(CALCULATOR_BUTTONS.dot);
+        const secondNumberHasDot = secondNumber.toString().includes(CALCULATOR_BUTTONS.dot);
+        const firstNumberDigitsAfterDot = firstNumber.toString().split(CALCULATOR_BUTTONS.dot)[1];
+        const secondNumberDigitsAfterDot = secondNumber.toString().split(CALCULATOR_BUTTONS.dot)[1];
         return firstNumberHasDot && secondNumberHasDot
-        ? Math.max(firstNumberNumbersAfterdot.length, secondNumberNumbersAfterdot.length)
-         : firstNumberHasDot ? firstNumberNumbersAfterdot.length
-         : secondNumberHasDot ? secondNumberNumbersAfterdot.length
-         : 0;
+        ? Math.max(firstNumberDigitsAfterDot.length, secondNumberDigitsAfterDot.length)
+        : firstNumberHasDot ? firstNumberDigitsAfterDot.length
+        : secondNumberHasDot ? secondNumberDigitsAfterDot.length
+        : 0;
       }
 
       const addZeroAtTheBeginningBeforeMinusSign = () => {
-        const CALC_INPUT = CALCULATOR_INPUT.innerHTML;
-        if (CALC_INPUT[0] === CALCULATOR_BUTTONS.minus) {
+        const calculatorInput = CALCULATOR_INPUT.innerHTML;
           addEquation(CALCULATOR_BUTTONS.zero, CALCULATOR_BUTTONS.minus,
-            CALC_INPUT.slice(1, CALC_INPUT.length));
-          CALCULATOR_INPUT.innerHTML = CALCULATOR_BUTTONS.zero +
-            CALCULATOR_INPUT.innerHTML;
-        }
+            calculatorInput.slice(1, calculatorInput.length));
+          CALCULATOR_INPUT.innerHTML = CALCULATOR_BUTTONS.zero
+          + calculatorInput;
       }
 
       const validateResult = (result) => {
-        return (result.toString().length < MAX_CHARACTERS_FOR_INT
-        || result.toString().includes(CALCULATOR_BUTTONS.dot))
-            && !result.toString().includes(NaN)
-            && !result.toString().includes('e')
-            && result.toString().length <= MAX_CHARACTERS_INPUT;
+        const resultToString = result.toString();
+        return (resultToString.length < MAX_CHARACTERS_FOR_INT
+        || resultToString.includes(CALCULATOR_BUTTONS.dot))
+        && !resultToString.includes(NaN)
+        && !resultToString.includes('e')
+        && resultToString.length <= MAX_CHARACTERS_INPUT;
       }
 
-      const lastCharacterValid = (lastCharacter) => {
-        if (!lastCharacter.match(/[0-9]/)) {
+      const deleteLastCharacterIfNotValid = (lastCharacter) => {
+        if (!lastCharacter.match(REGEX_ZERO_TO_NINE)) {
           backspace();
         }
       }
 
       const checkMultiplyOrDivideSigns = () => {
-        for (var equationIndex = 0; equationIndex < equations.length; equationIndex++) {
+        for (let equationIndex = 0; equationIndex < equations.length; equationIndex++) {
           if (equations[equationIndex].operator === CALCULATOR_BUTTONS.multiply
             || equations[equationIndex].operator === CALCULATOR_BUTTONS.divide) {
             return true;
@@ -331,14 +321,12 @@
       }
 
       const updateEquations = (result, equationIndex) => {
-        hasNextEquation = equations[equationIndex + 1] !== undefined;
-        hasPreviousEquation = equations[equationIndex - 1] !== undefined;
-        if (hasNextEquation && hasPreviousEquation) {
-          equations[equationIndex - 1].secondNum = result;
+      let  hasNextEquation = equations[equationIndex + 1] !== undefined;
+      let hasPreviousEquation = equations[equationIndex - 1] !== undefined;
+        if (hasNextEquation) {
           equations[equationIndex + 1].firstNum = result;
-        } else if (hasNextEquation) {
-          equations[equationIndex + 1].firstNum = result;
-        } else if (hasPreviousEquation) {
+        }
+        if (hasPreviousEquation) {
           equations[equationIndex - 1].secondNum = result;
         }
         equations.splice(equationIndex, 1);
