@@ -44,8 +44,7 @@
           return firstNumber / secondNumber;
         }
       };
-
-      let isNewEquation = true;
+      let isMathErrorDisplayed = false;
       let equations = [];
 
       CALCULATOR_INPUT.innerHTML = '';
@@ -58,16 +57,17 @@
 
       document.addEventListener('keydown', ({key}) => keySorter(key));
 
-      const keySorter = (key) => {
+      const keySorter = key => {
+      if(!isMathErrorDisplayed){
         if (CALCULATOR_ACTIONS_SIGNS.includes(key)) {
           CALCULATOR_ACTIONS[key]();
         } else {
-          if (isNewEquation && CALCULATOR_INPUT.innerHTML.length < MAX_CHARACTERS_INPUT) {
+          if (CALCULATOR_INPUT.innerHTML.length < MAX_CHARACTERS_INPUT) {
             writeInTextbox(key);
-            isNewEquation = true;
           }
         }
       }
+    }
 
       const writeInTextbox = (key) => {
         if (CALCULATOR_INPUT.innerHTML[0] === CALCULATOR_BUTTONS.minus) {
@@ -210,7 +210,6 @@
 
       const backspace = () => {
          const calculatorInput = CALCULATOR_INPUT.innerHTML;
-        if (isNewEquation) {
           if (equations.length) {
             const lastEquationSecondNumber = equations[equations.length - 1].secondNum;
             OPERATOR_SIGNS.includes(calculatorInput[calculatorInput.length - 1])
@@ -218,12 +217,10 @@
             = lastEquationSecondNumber.slice(0, lastEquationSecondNumber.length - 1);
           }
           CALCULATOR_INPUT.innerHTML = calculatorInput.slice(0, -1);
-        }
       }
 
       const clear = () => {
         CALCULATOR_INPUT.innerHTML = '';
-        isNewEquation = true;
         equations = [];
       }
 
@@ -244,11 +241,13 @@
       }
 
       const mathError = () => {
+        isMathErrorDisplayed = true;
         CALCULATOR_INPUT.innerHTML = MATH_ERROR_MESSAGE;
-        isNewEquation = false;
-        setTimeout(function() {
+        setTimeout(() =>{
           clear();
-        }, 3000);
+          isMathErrorDisplayed = false;
+        },3000);
+
       }
 
       const calculate = (equation) => {
